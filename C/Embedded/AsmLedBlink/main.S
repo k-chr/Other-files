@@ -1,0 +1,44 @@
+.global main
+.arm
+
+.EQU	LED1,		0x00000100
+.EQU	LED2,		0x20000000		
+.EQU 	PIOC_OER, 	0xFFFFF610
+.EQU	PIOC_PER, 	0xFFFFF600
+.EQU	PIOC_CODR,	0xFFFFF634
+.EQU	PIOC_SODR, 	0xFFFFF630
+.EQU	PIOB_PER, 	0xFFFFF400
+.EQU	PIOB_OER, 	0xFFFFF410
+.EQU	PIOB_SODR,	0xFFFFF430
+.EQU 	PIOB_CODR, 	0xFFFFF434
+
+.section .text
+
+main:
+	ldr     R1, =LED1
+	ldr	R2, =PIOB_PER
+	STR	R1, [R2]
+	ldr	R2, =PIOB_OER
+	STR 	R1, [R2]
+	ldr	R2, =PIOB_CODR
+	ldr 	R0, =PIOB_SODR
+	
+	STR 	R1, [R0]
+while:
+	LDR	R4, =0x00200000
+	STR 	R1, [R2]
+	BL 	delay
+	STR 	R1, [R0]
+	LDR	R4, =0x00200000
+	BL	delay	
+	B	while
+delay:	
+
+	SUBS	R4, R4, #1
+	BNE	delay
+	MOV 	PC, R14
+.section .data
+
+VAR_1:
+.word 0x87654321
+

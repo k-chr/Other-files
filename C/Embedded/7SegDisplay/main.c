@@ -1,0 +1,80 @@
+#include "at91sam9263.h"
+#include "AT91SAM9263-EK.h"
+
+#define SIZE        10
+#define DEBUG	    1
+volatile int side = 1;
+void dbgu_print_ascii(const char* str){
+	
+}
+void delay(unsigned int ms){
+	volatile unsigned int i = 0;
+	for(; i < ms*1000; i+=1){
+		if(((*AT91C_PIOC_PDSR & AT91B_BP1)))
+			side = 1;
+		else{
+			side = -1;		
+		}
+	}		
+}
+void printDigit(unsigned int* dig){
+	*AT91C_PIOB_SODR = AT91C_PIO_PB28| *dig;
+	delay(100);
+	*AT91C_PIOB_CODR = AT91C_PIO_PB28| *dig;
+}
+void delayedPrintNum(unsigned int ms, unsigned int* dig, unsigned int* dec){
+	volatile unsigned int i = 0;
+	for(; i < ms; i +=1){
+		*AT91C_PIOB_SODR = AT91C_PIO_PB28| *dig;
+		delay(1);
+		*AT91C_PIOB_CODR = AT91C_PIO_PB28| *dig;
+		*AT91C_PIOB_SODR = AT91C_PIO_PB30| *dec;
+		delay(1);
+		*AT91C_PIOB_CODR = AT91C_PIO_PB30| *dec;
+	}
+}
+void PIOB_init(){
+	*AT91C_PIOB_PER = AT91C_PIO_PB25|AT91C_PIO_PB24|AT91C_PIO_PB22|AT91C_PIO_PB21|AT91C_PIO_PB20|AT91C_PIO_PB27|AT91C_PIO_PB26|AT91C_PIO_PB30|AT91C_PIO_PB28;
+	*AT91C_PIOB_OER = AT91C_PIO_PB25|AT91C_PIO_PB24|AT91C_PIO_PB22|AT91C_PIO_PB21|AT91C_PIO_PB20|AT91C_PIO_PB27|AT91C_PIO_PB26|AT91C_PIO_PB30|AT91C_PIO_PB28;
+	*AT91C_PIOB_SODR = AT91C_PIO_PB25|AT91C_PIO_PB24|AT91C_PIO_PB22|AT91C_PIO_PB21|AT91C_PIO_PB20|AT91C_PIO_PB27|AT91C_PIO_PB26|AT91C_PIO_PB30|AT91C_PIO_PB28;
+	delay(15);
+	*AT91C_PIOB_CODR = AT91C_PIO_PB25|AT91C_PIO_PB24|AT91C_PIO_PB22|AT91C_PIO_PB21|AT91C_PIO_PB20|AT91C_PIO_PB27|AT91C_PIO_PB26|AT91C_PIO_PB30|AT91C_PIO_PB28;
+}
+void initButton(){
+	*AT91C_PIOC_PER = AT91B_BP1;
+	*AT91C_PIOC_ODR = AT91B_BP1;
+	*AT91C_PIOC_PPUER = AT91B_BP1;
+	*AT91C_PMC_PCER = AT91C_ID_PIOCDE;
+}
+int main(){
+	PIOB_init();
+	initButton();
+
+	unsigned int nums[10] = {
+							 AT91C_PIO_PB25|AT91C_PIO_PB27|AT91C_PIO_PB24|AT91C_PIO_PB20|AT91C_PIO_PB22|AT91C_PIO_PB21,
+							 AT91C_PIO_PB24|AT91C_PIO_PB22,
+							 AT91C_PIO_PB25|AT91C_PIO_PB24|AT91C_PIO_PB26|AT91C_PIO_PB20|AT91C_PIO_PB21,
+							 AT91C_PIO_PB25|AT91C_PIO_PB24|AT91C_PIO_PB26|AT91C_PIO_PB22|AT91C_PIO_PB21,
+							 AT91C_PIO_PB27|AT91C_PIO_PB26|AT91C_PIO_PB24|AT91C_PIO_PB22,
+							 AT91C_PIO_PB25|AT91C_PIO_PB27|AT91C_PIO_PB26|AT91C_PIO_PB22|AT91C_PIO_PB21,
+							 AT91C_PIO_PB25|AT91C_PIO_PB27|AT91C_PIO_PB26|AT91C_PIO_PB22|AT91C_PIO_PB21|AT91C_PIO_PB20,
+							 AT91C_PIO_PB25|AT91C_PIO_PB24|AT91C_PIO_PB22,
+							 AT91C_PIO_PB25|AT91C_PIO_PB24|AT91C_PIO_PB22|AT91C_PIO_PB21|AT91C_PIO_PB20|AT91C_PIO_PB27|AT91C_PIO_PB26,
+							 AT91C_PIO_PB25|AT91C_PIO_PB27|AT91C_PIO_PB24|AT91C_PIO_PB26|AT91C_PIO_PB22|AT91C_PIO_PB21
+				};
+	volatile int i = 0;
+	#if DEBUG == 1						
+	while(1){
+		delayedPrintNum(200, (nums + (i)%SIZE), (nums + (i)/SIZE));
+		i+=side;
+		i > 99 ? (i=0) : (i < 0 ? (i = 99) : 1);
+	}
+	#else
+	while(1){
+		++i;	
+		if(i > 9)	i = 0;
+		printDigit((nums + i));		
+	}
+	#endif
+	return 0;
+}
